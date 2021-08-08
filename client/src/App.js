@@ -1,14 +1,11 @@
 /* global chrome */
 import React, { useEffect, useState } from "react";
-import { saveAs } from "file-saver";
-
-const API_URL = process.env.REACT_APP_API_URL;
+import { FaSpinner } from "react-icons/fa";
 
 const App = () => {
   const [url, setUrl] = useState();
   const [active, setActive] = useState(false);
   const [videoId, setVideoId] = useState(null);
-  const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -19,12 +16,16 @@ const App = () => {
 
   useEffect(() => {
     if (url) {
-      const { host, pathname, search } = url;
+      const { host, pathname, searchParams } = url;
 
-      const bool = host === "www.youtube.com" && pathname === "/watch";
+      const bool =
+        host === "www.youtube.com" &&
+        pathname === "/watch" &&
+        searchParams.get("v") !== null;
+
       setActive(bool);
       if (bool) {
-        setVideoId(search.split("=")[1]);
+        setVideoId(searchParams.get("v"));
       } else {
         setVideoId("");
       }
@@ -35,21 +36,10 @@ const App = () => {
 
   const handleClick = async () => {
     setLoading(true);
-    try {
-      const { file, title } = await fetch(`${API_URL}/download/${videoId}`)
-        .then((response) => response.json())
-        .catch((error) => {
-          throw error;
-        });
-      await fetch(`data:audio/mp3;base64,${file}`)
-        .then((response) => response.blob())
-        .then((blob) => saveAs(blob, `${title}.mp3`));
-
-      setError(false);
-    } catch (e) {
-      setError(true);
-    }
-    setLoading(true);
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+      const activeTab = tabs[0];
+      chrome.tabs.sendMessage(activeTab.id, { videoId });
+    });
   };
 
   return (
@@ -60,21 +50,30 @@ const App = () => {
 
       <div>
         <h2>Video Id : {videoId}</h2>
-        {error && (
-          <h3 className="text-red-600 font-bold text-center">
-            Une erreur est survenue
-          </h3>
-        )}
       </div>
 
-      <div className="mx-auto text-center mt-3">
+      <div className="flex justify-center w-full mt-4">
         {active ? (
-          <button
-            onClick={handleClick}
-            className="bg-gradient-to-bl from-blue-600 to-blue-900 rounded text-white shadow hover:shadow-xl transform transition duration-75 hover:scale-105 text-lg px-4 py-1"
-          >
-            Convertir
-          </button>
+          <>
+            {!loading ? (
+              <button
+                onClick={handleClick}
+                className="bg-gradient-to-bl from-blue-600 to-blue-900 rounded text-white shadow hover:shadow-xl transform transition duration-75 hover:scale-105 text-lg px-4 py-1"
+              >
+                Convertir
+              </button>
+            ) : (
+              <button
+                disabled={true}
+                className="bg-gray-400 rounded font-semibold px-4 py-1 text-lg flex justify-center text-white rounded opacity-75 flex"
+              >
+                chargement{" "}
+                <i className="my-auto ml-3">
+                  <FaSpinner size={20} className="animate-spin" />
+                </i>
+              </button>
+            )}
+          </>
         ) : (
           <h3 className="opacity-50 text-black px-2 py-0.5 bg-gray-400">
             Aucune video détecter

@@ -1,0 +1,12 @@
+/server/node_modules
+/server/yarn.lock
+/server/.env
+/server/tmp/*
+!/server/tmp/.gitkeep
+
+/client/node_modules
+/client/yarn.lock
+/client/.env
+/client/dist/
+
+.idea

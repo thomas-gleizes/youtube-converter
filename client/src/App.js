@@ -36,6 +36,7 @@ const App = () => {
 
   const handleClick = async () => {
     setLoading(true);
+    console.log("id", videoId);
     chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
       const activeTab = tabs[0];
       chrome.tabs.sendMessage(activeTab.id, { videoId });

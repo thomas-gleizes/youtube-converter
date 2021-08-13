@@ -1,13 +1,16 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const timeout = require("connect-timeout");
 const cors = require("cors");
+const dotenv = require("dotenv");
 const moment = require("moment");
 const fs = require("fs");
 const ytdl = require("ytdl-core");
 const ffmpeg = require("fluent-ffmpeg");
 const ffmetadata = require("ffmetadata");
 const fetch = require("node-fetch");
-const { exec } = require("child_process");
+
+dotenv.config();
 
 const app = express();
 
@@ -15,6 +18,22 @@ app.use(cors());
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(express.static("public"));
+app.use(timeout(1000 * 30));
+
+app.get("*", (req, res, next) => {
+  if (req.headers.authorization !== process.env.TOKEN) {
+    console.log("tentative échoué");
+    res.status(401).send();
+  } else {
+    next();
+  }
+});
+
+const MP3 = "./tmp/file.mp3";
+const MP4 = "./tmp/file.mp4";
+const WEBP = "./tmp/file.webp";
+const JPG = "./tmp/file.jpg";
 
 const downloadVideo = (url, dest) => {
   return new Promise((resolve, reject) => {
@@ -44,9 +63,6 @@ const convertToMp3 = (source, dest) => {
     ffmpeg({ source })
       .output(dest)
       .audioBitrate("192k")
-      .on("progress", ({ percent }) => {
-        console.log(`Convert : ${percent.toFixed(1)}%`);
-      })
       .on("end", () => {
         console.log("Convert : FINISH");
         resolve();
@@ -62,31 +78,35 @@ const convertToMp3 = (source, dest) => {
 const downloadCover = (info) => {
   console.log("cover");
   return new Promise(async (resolve, reject) => {
-    const { videoDetails } = info;
-    const media = videoDetails.thumbnails[videoDetails.thumbnails.length - 1];
+    const {
+      videoDetails: { thumbnails },
+    } = info;
+    const media = thumbnails[thumbnails.length - 1];
 
     const buffer = await fetch(media.url).then((response) => response.buffer());
-    fs.writeFile("./tmp/file.webp", buffer, (err) => {
+    fs.writeFile(WEBP, buffer, (err) => {
       if (err) reject(err);
       else {
-        exec("ffmpeg -i tmp/file.webp tmp/file.jpg", (err, out) => {
-          if (err) reject(err);
-          else resolve();
-        });
+        ffmpeg({ source: WEBP })
+          .output(JPG)
+          .on("end", resolve)
+          .on("error", reject)
+          .run();
       }
     });
   });
 };
 
 const setMetadata = (source, { videoDetails }) => {
-  console.log("metadata");
   const metadata = {
     title: videoDetails.title.replace("(lyrics)", "").replace("(Lyrics)", ""),
     author: videoDetails.author.name,
   };
 
+  console.log("metadata : ", metadata);
+
   const options = {
-    attachments: ["./tmp/file.jpg"],
+    attachments: [JPG],
   };
 
   return new Promise((resolve, reject) => {
@@ -98,16 +118,19 @@ const setMetadata = (source, { videoDetails }) => {
 };
 
 const clearTmp = () => {
-  fs.unlink("./tmp/file.jpg", () => {});
-  fs.unlink("./tmp/file.mp4", () => {});
-  fs.unlink("./tmp/file.mp3", () => {});
-  fs.unlink("./tmp/file.webp", () => {});
+  fs.unlink(MP3, () => {});
+  fs.unlink(MP4, () => {});
+  fs.unlink(WEBP, () => {});
+  fs.unlink(JPG, () => {});
 };
 
-app.get("/download/:id", async (req, res) => {
-  const mp3 = "./tmp/file.mp3";
-  const mp4 = "./tmp/file.mp4";
+app.get("/", (req, res) => {
+  console.log("request to index");
 
+  res.send({ route: "http://localhost:7999/download/:id", success: true });
+});
+
+app.get("/download/:id", async (req, res) => {
   try {
     const { id } = req.params;
     console.log(`received : ${id}`);
@@ -115,14 +138,17 @@ app.get("/download/:id", async (req, res) => {
     const url = `https://www.youtube.com/watch?v=${id}`;
     const info = await ytdl.getInfo(url);
 
-    await downloadVideo(url, mp4);
-    await convertToMp3(mp4, mp3);
+    if (info.videoDetails.lengthSeconds > 480)
+      throw new Error("the video is to big");
+
+    await downloadVideo(url, MP4);
+    await convertToMp3(MP4, MP3);
     await downloadCover(info);
-    await setMetadata(mp3, info);
+    await setMetadata(MP3, info);
 
     const file = await new Promise((resolve, reject) => {
       console.log("read");
-      fs.readFile(mp3, "base64", (err, data) => {
+      fs.readFile(MP3, "base64", (err, data) => {
         if (err) reject(err);
         else resolve(data);
       });
@@ -130,41 +156,29 @@ app.get("/download/:id", async (req, res) => {
 
     clearTmp();
 
+    console.log("END : script");
     res.send({ success: true, title: info.videoDetails.title, file });
   } catch (e) {
-    console.log(e);
+    console.log("error", e);
     res.status(400).send({ error: e.message });
   }
 });
 
-app.get("/test", async (req, res) => {
+app.get("/info/:id", async (req, res) => {
   try {
-    const info = await ytdl.getInfo(
-      "https://www.youtube.com/watch?v=ZMDG9qB-HqY"
-    );
-
-    const { videoDetails } = info;
-    const media = videoDetails.thumbnails[0];
-
-    const buffer = await fetch(media.url).then((response) => response.buffer());
-    await new Promise((resolve, reject) => {
-      fs.writeFile("./tmp/file.webp", buffer, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-
-    res.send({ success: true, media, info });
+    const { id } = req.params;
+    const url = `https://www.youtube.com/watch?v=${id}`;
+    const { videoDetails } = await ytdl.getInfo(url);
+    res.send({ success: true, details: videoDetails });
   } catch (e) {
-    console.error(e);
-    res.status(400).send({ message: e.message });
+    res.status(400);
   }
 });
 
-app.listen(8080, () => {
+app.listen(process.env.PORT || 8080, () => {
   console.log(
     `============= server start at : ${moment().format(
       "YYYY-MM-DD HH:mm:ss"
-    )} =============`
+    )}, on Port : ${process.env.PORT || 8080} =============`
   );
 });

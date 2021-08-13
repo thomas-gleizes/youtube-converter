@@ -24,4 +24,4 @@ yarn-debug.log*
 yarn-error.log*
 
 /src/styles/tailwind.output.css
-/dist
+.env

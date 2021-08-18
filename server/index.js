@@ -14,19 +14,26 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
-
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+    exposedHeaders: ["Content-Disposition"],
+  })
+);
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
 app.use(express.static("public"));
 app.use(timeout(1000 * 30));
 
 app.get("*", (req, res, next) => {
-  if (req.headers.authorization !== process.env.TOKEN) {
+  if (
+    process.env.NODE_ENV === "dev" ||
+    req.headers.authorization === process.env.TOKEN
+  ) {
+    next();
+  } else {
     console.log("tentative échoué");
     res.status(401).send();
-  } else {
-    next();
   }
 });
 
@@ -146,18 +153,17 @@ app.get("/download/:id", async (req, res) => {
     await downloadCover(info);
     await setMetadata(MP3, info);
 
-    const file = await new Promise((resolve, reject) => {
-      console.log("read");
-      fs.readFile(MP3, "base64", (err, data) => {
-        if (err) reject(err);
-        else resolve(data);
-      });
-    });
-
+    const stream = fs.createReadStream(MP3);
     clearTmp();
 
-    console.log("END : script");
-    res.send({ success: true, title: info.videoDetails.title, file });
+    res.set("Content-Type", "audio/mp3");
+    res.set(
+      "Content-Disposition",
+      `attachment; filename="${info.videoDetails.title}"`
+    );
+
+    console.log("script : finish");
+    stream.pipe(res);
   } catch (e) {
     console.log("error", e);
     res.status(400).send({ error: e.message });
@@ -167,12 +173,23 @@ app.get("/download/:id", async (req, res) => {
 app.get("/info/:id", async (req, res) => {
   try {
     const { id } = req.params;
+
+    console.log("info :", id);
     const url = `https://www.youtube.com/watch?v=${id}`;
     const { videoDetails } = await ytdl.getInfo(url);
     res.send({ success: true, details: videoDetails });
   } catch (e) {
     res.status(400);
   }
+});
+
+app.get("/headers", async (req, res) => {
+  const stream = fs.createReadStream("./tmp/test.mp3");
+
+  res.set("Content-Type", "audio/mp3");
+  res.set("Content-Disposition", `attachment; filename="ceci est un test"`);
+
+  stream.pipe(res);
 });
 
 app.listen(process.env.PORT || 8080, () => {

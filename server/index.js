@@ -42,6 +42,8 @@ const MP4 = "./tmp/file.mp4";
 const WEBP = "./tmp/file.webp";
 const JPG = "./tmp/file.jpg";
 
+const getDate = () => moment().format("YYYY-MM-DD HH:mm:ss");
+
 const downloadVideo = (url, dest) => {
   return new Promise((resolve, reject) => {
     const stream = ytdl(url, {
@@ -140,7 +142,7 @@ app.get("/", (req, res) => {
 app.get("/download/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`received : ${id}`);
+    console.log(getDate(), `received : ${id}`);
 
     const url = `https://www.youtube.com/watch?v=${id}`;
     const info = await ytdl.getInfo(url);
@@ -174,7 +176,7 @@ app.get("/info/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log("info :", id);
+    console.log(getDate(), "info :", id);
     const url = `https://www.youtube.com/watch?v=${id}`;
     const { videoDetails } = await ytdl.getInfo(url);
     res.send({ success: true, details: videoDetails });
@@ -194,8 +196,8 @@ app.get("/headers", async (req, res) => {
 
 app.listen(process.env.PORT || 8080, () => {
   console.log(
-    `============= server start at : ${moment().format(
-      "YYYY-MM-DD HH:mm:ss"
-    )}, on Port : ${process.env.PORT || 8080} =============`
+    `============= server start at : ${getDate()}, on Port : ${
+      process.env.PORT || 8080
+    } =============`
   );
 });

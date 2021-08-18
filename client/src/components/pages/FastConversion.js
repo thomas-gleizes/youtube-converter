@@ -50,7 +50,7 @@ const FastConversion = () => {
   return (
     <div className="w-full py-2">
       <div className="mb-3 mx-2 text-md">
-        VideoId : <span>{videoId || "aucun"}</span>
+        Video id : <span>{videoId || "aucun"}</span>
       </div>
       <div className="text-center mx-3">
         {videoId ? (

@@ -1,5 +1,5 @@
 import useFetch from "./useFetch";
 import useValues from "./useValues";
-import useContextFactory from "./useContextFactory";
+import useToggle from "./useToggle";
 
-export { useFetch, useValues, useContextFactory };
+export { useFetch, useValues, useToggle };

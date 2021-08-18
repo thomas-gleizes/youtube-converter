@@ -15,7 +15,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="bg-gray-50 py-2 border-t">
+    <footer className="bg-gray-100 py-2 border-t-2 rounded-t-md">
       <nav className="flex justify-evenly">
         {routes.map((route) => (
           <NavItem key={route.id} route={route} />

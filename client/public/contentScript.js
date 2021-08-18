@@ -75,7 +75,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (action === "download") {
       download(request.videoId).then(() => sendResponse({ success: true }));
     } else if (action === "ask") {
-      console.log("ask recu");
       sendResponse({ videoDetails, videoId, status });
     } else {
       console.log("no action");

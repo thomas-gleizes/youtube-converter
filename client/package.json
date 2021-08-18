@@ -10,6 +10,7 @@
     "build:tailwind": "tailwindcss build -i src/styles/index.css -o src/styles/tailwind.output.css"
   },
   "dependencies": {
+    "@tailwindui/react": "^0.1.1",
     "autoprefixer": "^10.3.1",
     "postcss": "^8.3.6",
     "prop-types": "^15.7.2",

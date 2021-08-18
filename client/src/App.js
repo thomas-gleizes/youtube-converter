@@ -6,7 +6,6 @@ import FastConversion from "./components/pages/FastConversion";
 import DetailsConversion from "./components/pages/DetailsConversion";
 
 export const RouteContext = createContext({});
-export const VideoContext = createContext({});
 
 const routes = [
   {
@@ -22,22 +21,20 @@ const routes = [
 ];
 
 const App = () => {
-  const [route, setRoute] = useState(routes[0]);
+  const [route, setRoute] = useState(routes[1]);
 
   const Component = useMemo(() => route.Component, [route]);
 
   return (
-    <VideoContext.Provider value={{}}>
-      <RouteContext.Provider value={[route, setRoute, routes]}>
-        <div style={{ width: "330px" }} className="border">
-          <Header />
-          <main>
-            <Component />
-          </main>
-          <Footer />
-        </div>
-      </RouteContext.Provider>
-    </VideoContext.Provider>
+    <RouteContext.Provider value={[route, setRoute, routes]}>
+      <div style={{ maxWidth: "330px", width: "100%" }} className="bg-white">
+        <Header />
+        <main>
+          <Component />
+        </main>
+        <Footer />
+      </div>
+    </RouteContext.Provider>
   );
 };
 

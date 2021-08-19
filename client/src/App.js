@@ -29,18 +29,20 @@ const App = () => {
 
   return (
     <RouteContext.Provider value={[route, setRoute, routes]}>
-      <SimpleBar style={{ maxHeight: 600 }}>
-        <div
-          style={{ maxWidth: "330px", width: "100%" }}
-          className="bg-white border-2 border-gray-900"
-        >
-          <Header />
-          <main>
-            <Component />
-          </main>
-          <Footer />
-        </div>
-      </SimpleBar>
+      <div
+        style={{ maxWidth: "310px", width: "100%", maxHeight: "600px" }}
+        className="bg-white border-2 border-gray-900"
+      >
+        <Header />
+        <main>
+          <SimpleBar style={{ maxHeight: "512px" }}>
+            <div className="pr-1">
+              <Component />
+            </div>
+          </SimpleBar>
+        </main>
+        <Footer />
+      </div>
     </RouteContext.Provider>
   );
 };

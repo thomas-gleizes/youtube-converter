@@ -1,6 +1,6 @@
 const Header = () => {
   return (
-    <header className="px-3 py-2 rounded-b-lg bg-gray-100 shadow">
+    <header className="px-3 py-2 rounded-b-lg bg-gray-200 shadow">
       <div className="flex justify-between">
         <h1 className="text-md text-xl text-blue-700 font-bold">
           Youtube-converter

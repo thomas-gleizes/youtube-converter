@@ -1,11 +1,12 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { Transition } from "@tailwindui/react";
 import { FaMinus, FaPlus } from "react-icons/fa";
 
 import { useToggle } from "../../hooks";
 
-const Card = ({ title, children }) => {
-  const [open, toggle] = useToggle(true);
+const Card = ({ title, children, defaultOpen }) => {
+  const [open, toggle] = useToggle(defaultOpen);
 
   return (
     <div className="border mt-2 rounded-lg shadow-md">
@@ -31,6 +32,16 @@ const Card = ({ title, children }) => {
       </Transition>
     </div>
   );
+};
+
+Card.propTypes = {
+  title: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+  defaultOpen: PropTypes.bool,
+};
+
+Card.defaultProps = {
+  defaultOpen: true,
 };
 
 export default Card;

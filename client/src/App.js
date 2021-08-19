@@ -1,4 +1,6 @@
 import React, { createContext, useMemo, useState } from "react";
+import SimpleBar from "simplebar-react";
+import "simplebar/dist/simplebar.min.css";
 
 import Header from "./components/layouts/Header";
 import Footer from "./components/layouts/Footer";
@@ -27,13 +29,18 @@ const App = () => {
 
   return (
     <RouteContext.Provider value={[route, setRoute, routes]}>
-      <div style={{ maxWidth: "330px", width: "100%" }} className="bg-white">
-        <Header />
-        <main>
-          <Component />
-        </main>
-        <Footer />
-      </div>
+      <SimpleBar style={{ maxHeight: 600 }}>
+        <div
+          style={{ maxWidth: "330px", width: "100%" }}
+          className="bg-white border-2 border-gray-900"
+        >
+          <Header />
+          <main>
+            <Component />
+          </main>
+          <Footer />
+        </div>
+      </SimpleBar>
     </RouteContext.Provider>
   );
 };

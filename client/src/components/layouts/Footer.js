@@ -8,14 +8,19 @@ const Footer = () => {
     const handleClick = () => setRoute(route);
 
     return (
-      <div onClick={handleClick} className="cursor-pointer text-center">
+      <div
+        onClick={handleClick}
+        className={`cursor-pointer text-center ${
+          current === route && "border-b-2 border-white"
+        }`}
+      >
         {route.libelle}
       </div>
     );
   };
 
   return (
-    <footer className="bg-gray-100 py-2 border-t-2 rounded-t-md">
+    <footer className="bg-gradient-to-bl from-blue-900 to-gray-900 text-white py-2 rounded-t-md">
       <nav className="flex justify-evenly">
         {routes.map((route) => (
           <NavItem key={route.id} route={route} />

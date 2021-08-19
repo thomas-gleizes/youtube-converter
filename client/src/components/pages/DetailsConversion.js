@@ -18,12 +18,13 @@ const DetailsConversion = () => {
       chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
         chrome.tabs.sendMessage(tabs[0].id, { action: "ask" }, (response) => {
           console.log("response", response);
-          setStatus(response.status || "ERROR");
           if (response?.status === "ready") {
             const { videoDetails, videoId } = response;
             setVideo({ id: videoId, ...videoDetails });
+            setStatus(response.status);
           } else {
             console.log("retry : ", response?.status);
+            setStatus(response?.status || "error");
             setTimeout(getInfoFromContentScript, TIMEOUT);
           }
         });
@@ -52,6 +53,8 @@ const DetailsConversion = () => {
 
   useEffect(getInfoFromContentScript, []);
 
+  useEffect(() => console.log("video", video), [video]);
+
   if (status !== "ready") return <Spinner size={30} />;
 
   return (
@@ -60,9 +63,7 @@ const DetailsConversion = () => {
       <Cover video={video} />
       <TimeLine video={video} />
       <div className="mt-2">
-        <Button loading={false} color="blue">
-          Convertir
-        </Button>
+        <Button loading={false}>Convertir</Button>
       </div>
     </div>
   );

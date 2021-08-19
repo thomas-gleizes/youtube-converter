@@ -4,7 +4,7 @@ import Card from "../../layouts/Card";
 
 const Cover = ({ video }) => {
   return (
-    <Card title="Couverture">
+    <Card title="Couverture" defaultOpen={true}>
       <>
         <div className="py-1">
           {video.thumbnails && (

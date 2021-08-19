@@ -1,5 +1,5 @@
 /* global chrome */
-import React, { useEffect, useState } from "react";
+import React, { createContext, useEffect, useState } from "react";
 
 import Spinner from "../common/Spinner";
 import Button from "../common/Button";
@@ -9,9 +9,13 @@ import TimeLine from "./detail/TimeLine";
 
 const TIMEOUT = 300;
 
+export const DetailsContext = createContext({});
+
 const DetailsConversion = () => {
   const [video, setVideo] = useState({});
   const [status, setStatus] = useState("waiting");
+  const [loading, setLoading] = useState(false);
+  const valuesState = useState({});
 
   const getInfoFromContentScript = () => {
     if (chrome?.tabs?.query) {
@@ -30,23 +34,14 @@ const DetailsConversion = () => {
         });
       });
     } else {
-      const Tabid = [
-        "PMsksbchdDg",
-        "pOMXOyJRzIc",
-        "BJ8XPi-cPkM",
-        "WUTiZ82Gxsg",
-        "18JQUYgpOlw",
-        "DpCfhRVqJWU",
-      ];
+      const Tabid = ["3PCHyHvLr4M", "sgt3ZjTBT1E"];
+      const id = Tabid[Math.floor(Math.random() * Tabid.length)];
 
-      fetch(
-        "http://localhost:7999/info/" +
-          Tabid[Math.floor(Math.random() * Tabid.length)]
-      )
+      fetch(`http://localhost:7999/info/${id}`)
         .then((res) => res.json())
         .then((json) => {
           setStatus("ready");
-          setVideo({ id: "0c3_3cAo2lE", ...json.details });
+          setVideo({ id, ...json.details });
         });
     }
   };
@@ -55,17 +50,42 @@ const DetailsConversion = () => {
 
   useEffect(() => console.log("video", video), [video]);
 
+  const handleClick = async () => {
+    setLoading(true);
+    const [values] = valuesState;
+    const { id: videoId } = video;
+
+    if (chrome.tabs)
+      chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) =>
+        chrome.tabs.sendMessage(
+          tabs[0].id,
+          { action: "download2", videoId, params: values },
+          (response) => {
+            if (response.success) setLoading(false);
+          }
+        )
+      );
+    else {
+      await new Promise((resolve) => setTimeout(resolve, 4000));
+      setLoading(false);
+    }
+  };
+
   if (status !== "ready") return <Spinner size={30} />;
 
   return (
-    <div className="p-2">
-      <MetaData video={video} />
-      <Cover video={video} />
-      <TimeLine video={video} />
-      <div className="mt-2">
-        <Button loading={false}>Convertir</Button>
+    <DetailsContext.Provider value={valuesState}>
+      <div className="p-2">
+        <MetaData video={video} />
+        <Cover video={video} />
+        <TimeLine video={video} />
+        <div className="mt-2">
+          <Button onClick={handleClick} loading={loading}>
+            Convertir
+          </Button>
+        </div>
       </div>
-    </div>
+    </DetailsContext.Provider>
   );
 };
 

@@ -1,27 +1,52 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 
+import { DetailsContext } from "../DetailsConversion";
 import Card from "../../layouts/Card";
 import Range from "../../common/Range";
+
+const MAX = 480;
 
 const TimeLine = ({ video }) => {
   const length = parseInt(video.lengthSeconds) || 10;
   const [values, setValues] = useState({ min: 0, max: length });
+  const [toLong, setToLong] = useState(length > MAX);
+  const [state, setState] = useContext(DetailsContext);
 
   useEffect(() => setValues({ min: 0, max: length }), [length]);
+
+  useEffect(() => setToLong(values.max - values.min > MAX), [values, length]);
 
   useEffect(() => {
     const input = document.querySelector(".input-range__track--active");
 
-    if (values.max - values.min > 480) input.style.backgroundColor = "#DC2626";
+    if (values.max - values.min > MAX) input.style.backgroundColor = "#DC2626";
     else input.style.backgroundColor = "#10B981";
-  }, [values]);
+  }, [toLong]);
+
+  useEffect(
+    () =>
+      setState({ ...state, timeline: { begin: values.min, end: values.max } }),
+    [values]
+  );
 
   return (
     <Card title="Timeline" defaultOpen={true}>
       <ul className="text-xs p-2">
         <li>
-          <span className="font-semibold">Dureé : </span>
-          {values.max - values.min} secondes
+          <span className="font-semibold text-gray-800">Durée : </span>
+          <span className={toLong ? "text-red-600" : ""}>
+            {values.max - values.min} secondes
+          </span>
+        </li>
+        <li>
+          <span className="font-semibold text-gray-800">Max : </span>
+          {MAX} secondes
+        </li>
+        <li>
+          <span className="font-semibold text-gray-800">Delta : </span>
+          <span className={toLong ? "text-red-600" : "text-green-600"}>
+            {values.max - values.min - MAX} secondes
+          </span>
         </li>
       </ul>
       <div className="p-6">

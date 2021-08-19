@@ -9,7 +9,7 @@ const Card = ({ title, children, defaultOpen }) => {
   const [open, toggle] = useToggle(defaultOpen);
 
   return (
-    <div className="border mt-2 rounded-lg shadow-md">
+    <div className="border mb-2 rounded-lg shadow-md">
       <div className="px-2 py-1 flex justify-between">
         <h2 className="text-lg">{title}</h2>
         <button
@@ -28,7 +28,7 @@ const Card = ({ title, children, defaultOpen }) => {
         leaveFrom="opacity-100"
         leaveTo="opacity-0"
       >
-        <div className="border-t">{children}</div>
+        <div className="border-t bg-white">{children}</div>
       </Transition>
     </div>
   );

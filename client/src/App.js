@@ -30,8 +30,8 @@ const App = () => {
   return (
     <RouteContext.Provider value={[route, setRoute, routes]}>
       <div
-        style={{ maxWidth: "310px", width: "100%", maxHeight: "600px" }}
-        className="bg-white border-2 border-gray-900"
+        style={{ maxHeight: "600px" }}
+        className="w-full bg-white border-2 border-gray-900"
       >
         <Header />
         <main>

@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import PropTypes from "prop-types";
 import { FaSpinner } from "react-icons/fa";
 
-const Button = ({ color, loading, children, ...rest }) => {
+const Button = ({ color, loading, onClick, children, ...rest }) => {
   const className = useMemo(() => {
     if (loading) return `bg-gradient-to-bl from-gray-300 to-gray-400 shadow`;
     else
@@ -12,6 +12,7 @@ const Button = ({ color, loading, children, ...rest }) => {
   return (
     <button
       {...rest}
+      onClick={onClick}
       disabled={loading}
       className={`${className} rounded text-white text-center text-lg w-full py-1`}
     >
@@ -32,6 +33,7 @@ const Button = ({ color, loading, children, ...rest }) => {
 Button.propTypes = {
   color: PropTypes.string.isRequired,
   loading: PropTypes.bool,
+  onClick: PropTypes.func,
 };
 
 Button.defaultProps = {

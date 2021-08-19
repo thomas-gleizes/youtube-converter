@@ -62,10 +62,30 @@ const download = async (videoId) => {
   anchor.click();
 };
 
+const downloadWithParams = async (videoId, options) => {
+  console.log("options", options);
+
+  await new Promise((resolve) => setTimeout(resolve, 5000));
+
+  console.log("end");
+  /*
+  const params = {};
+
+  const response = await fetchApi(`/download2/${videoId}`, { params });
+  const blob = await response.blob();
+  const filename = response.headers.get("Content-Disposition").split('"')[1];
+
+  const anchor = document.createElement("a");
+  anchor.download = `${parseTitle(filename)}.mp3`;
+  anchor.href = URL.createObjectURL(blob);
+  anchor.click();
+
+   */
+};
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   try {
     console.log("request", request);
-    console.log("sender", sender);
     const { action } = request;
 
     if (action === "info") {
@@ -74,6 +94,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       );
     } else if (action === "download") {
       download(request.videoId).then(() => sendResponse({ success: true }));
+    } else if (action === "download2") {
+      downloadWithParams(request.videoId, request.params).then(() =>
+        sendResponse({ success: true })
+      );
     } else if (action === "ask") {
       sendResponse({ videoDetails, videoId, status });
     } else {

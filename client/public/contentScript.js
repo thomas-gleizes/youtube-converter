@@ -14,7 +14,13 @@ let videoDetails = null;
 let status = WAITING;
 
 function fetchApi(path, options) {
-  return fetch(API_URL + path, { HEADERS, ...options });
+  const url = new URL(`${API_URL}/${path}`);
+  if (options?.params)
+    Object.keys(options.params).forEach((key) =>
+      url.searchParams.append(key, options.params[key])
+    );
+
+  return fetch(url.href, { HEADERS, method: "GET" });
 }
 
 function parseTitle(title) {
@@ -36,7 +42,7 @@ const initialize = async (url) => {
       videoId = searchParams.get("v");
       status = LOADING;
 
-      const json = await fetchApi(`/info/${videoId}`).then((response) =>
+      const json = await fetchApi(`info/${videoId}`).then((response) =>
         response.json()
       );
 
@@ -51,8 +57,8 @@ const initialize = async (url) => {
   }
 };
 
-const download = async (videoId) => {
-  const response = await fetchApi(`/download/${videoId}`);
+const download = async (videoId, params) => {
+  const response = await fetchApi(`download2/${videoId}`, { params });
   const blob = await response.blob();
   const filename = response.headers.get("Content-Disposition").split('"')[1];
 
@@ -60,27 +66,6 @@ const download = async (videoId) => {
   anchor.download = `${parseTitle(filename)}.mp3`;
   anchor.href = URL.createObjectURL(blob);
   anchor.click();
-};
-
-const downloadWithParams = async (videoId, options) => {
-  console.log("options", options);
-
-  await new Promise((resolve) => setTimeout(resolve, 5000));
-
-  console.log("end");
-  /*
-  const params = {};
-
-  const response = await fetchApi(`/download2/${videoId}`, { params });
-  const blob = await response.blob();
-  const filename = response.headers.get("Content-Disposition").split('"')[1];
-
-  const anchor = document.createElement("a");
-  anchor.download = `${parseTitle(filename)}.mp3`;
-  anchor.href = URL.createObjectURL(blob);
-  anchor.click();
-
-   */
 };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -95,7 +80,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (action === "download") {
       download(request.videoId).then(() => sendResponse({ success: true }));
     } else if (action === "download2") {
-      downloadWithParams(request.videoId, request.params).then(() =>
+      download(request.videoId, request.params).then(() =>
         sendResponse({ success: true })
       );
     } else if (action === "ask") {

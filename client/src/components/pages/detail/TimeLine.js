@@ -24,8 +24,7 @@ const TimeLine = ({ video }) => {
   }, [toLong]);
 
   useEffect(
-    () =>
-      setState({ ...state, timeline: { begin: values.min, end: values.max } }),
+    () => setState({ ...state, begin: values.min, end: values.max }),
     [values]
   );
 

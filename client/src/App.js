@@ -10,16 +10,8 @@ import DetailsConversion from "./components/pages/DetailsConversion";
 export const RouteContext = createContext({});
 
 const routes = [
-  {
-    id: 0,
-    libelle: "Rapide",
-    Component: FastConversion,
-  },
-  {
-    id: 1,
-    libelle: "Detailer",
-    Component: DetailsConversion,
-  },
+  { id: 0, libelle: "Rapide", Component: FastConversion },
+  { id: 1, libelle: "Detailer", Component: DetailsConversion },
 ];
 
 const App = () => {

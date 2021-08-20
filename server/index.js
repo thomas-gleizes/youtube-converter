@@ -11,7 +11,6 @@ const ffmetadata = require("ffmetadata");
 const fetch = require("node-fetch");
 
 dotenv.config();
-
 const app = express();
 
 app.use(
@@ -23,7 +22,7 @@ app.use(
 );
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static("public"));
-app.use(timeout(1000 * 30));
+//app.use(timeout(1000 * 30));
 
 app.get("*", (req, res, next) => {
   if (
@@ -84,14 +83,15 @@ const convertToMp3 = (source, dest) => {
   });
 };
 
-const downloadCover = (info) => {
+const downloadCover = (info, index = null) => {
   console.log("cover");
   return new Promise(async (resolve, reject) => {
     const {
       videoDetails: { thumbnails },
     } = info;
-    const media = thumbnails[thumbnails.length - 1];
-
+    if (!index) index = thumbnails.length - 1;
+    const media = thumbnails[index];
+    console.log("MEDIA : ", index, media);
     const buffer = await fetch(media.url).then((response) => response.buffer());
     fs.writeFile(WEBP, buffer, (err) => {
       if (err) reject(err);
@@ -107,12 +107,15 @@ const downloadCover = (info) => {
 };
 
 const setMetadata = (source, { videoDetails }) => {
-  const metadata = {
-    title: videoDetails.title.replace("(lyrics)", "").replace("(Lyrics)", ""),
-    author: videoDetails.author.name,
-  };
+  const { media } = videoDetails;
 
-  console.log("metadata : ", metadata);
+  let metadata = {};
+  if (media.category === "Music") metadata = { ...media };
+  else
+    metadata = {
+      title: videoDetails.title.replace("(lyrics)", "").replace("(Lyrics)", ""),
+      author: videoDetails.author.name,
+    };
 
   const options = {
     attachments: [JPG],
@@ -155,20 +158,91 @@ app.get("/download/:id", async (req, res) => {
     await downloadCover(info);
     await setMetadata(MP3, info);
 
-    const stream = fs.createReadStream(MP3);
-    clearTmp();
-
     res.set("Content-Type", "audio/mp3");
     res.set(
       "Content-Disposition",
       `attachment; filename="${info.videoDetails.title}"`
     );
 
+    const stream = fs.createReadStream(MP3);
     console.log("script : finish");
     stream.pipe(res);
+    clearTmp();
   } catch (e) {
     console.log("error", e);
     res.status(400).send({ error: e.message });
+  }
+});
+
+app.get("/download2/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const url = `https://www.youtube.com/watch?v=${id}`;
+    const info = await ytdl.getInfo(url, { quality: "highestaudio" });
+    const videoLength = parseInt(info.videoDetails.lengthSeconds);
+
+    const begin = parseInt(req.query.begin);
+    const end = parseInt(req.query.end);
+
+    console.log("begin", begin);
+    console.log("end", end);
+
+    let firstoptions,
+      secondoptions = "";
+    let length = videoLength;
+
+    if (begin && end) {
+      firstoptions = `-ss ${begin}`;
+      secondoptions = `-t ${end - begin}`;
+      length = end - begin;
+    } else if (begin) {
+      firstoptions = `-ss ${begin}`;
+      secondoptions = `-t ${videoLength}`;
+      length = videoLength - begin;
+    } else if (end) {
+      firstoptions = "-ss 0";
+      secondoptions = `-t ${end}`;
+      length = end;
+    } else {
+      firstoptions = "-ss 0";
+      secondoptions = `-t ${videoLength}`;
+      length = videoLength;
+    }
+
+    console.log("options : ", firstoptions, secondoptions);
+
+    if (length > 480) throw new Error("la video est trop longue");
+    await new Promise((resolve, reject) =>
+      ffmpeg(
+        ytdl.downloadFromInfo(info, {
+          quality: "highestaudio",
+        })
+      )
+        .audioBitrate(info.formats[0].audioBitrate)
+        .withAudioCodec("libmp3lame")
+        .toFormat("mp3")
+        .inputOptions(firstoptions)
+        .inputOptions(secondoptions)
+        .saveToFile(MP3)
+        .on("progress", (progress) =>
+          console.log("progress : ", progress.timemark)
+        )
+        .on("error", reject)
+        .on("end", resolve)
+    );
+
+    await downloadCover(info, req.query.cover);
+    await setMetadata(MP3, info);
+
+    res.set("Content-Type", "audio/mp3");
+    res.set("Content-Disposition", `attachment; filename="test"`);
+
+    const audioStream = fs.createReadStream(MP3);
+    audioStream.pipe(res);
+    clearTmp();
+  } catch (e) {
+    console.log("Error : ", e);
+    res.status(500).send("une erreur est survenue.");
   }
 });
 

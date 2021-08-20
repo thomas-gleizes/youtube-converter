@@ -19,3 +19,7 @@ code {
 #root {
   width: 310px;
 }
+
+.simplebar-track.simplebar-vertical {
+  width: 7px !important;
+}

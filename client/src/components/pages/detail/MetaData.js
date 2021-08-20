@@ -3,6 +3,8 @@ import React from "react";
 import Card from "../../layouts/Card";
 
 const MetaData = ({ video }) => {
+  console.log(video.media);
+
   return (
     <Card title="Metadata">
       <ul className="text-xs p-2">

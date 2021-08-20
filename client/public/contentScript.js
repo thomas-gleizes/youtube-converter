@@ -46,6 +46,8 @@ const initialize = async (url) => {
         response.json()
       );
 
+      console.log("media", json.details.media);
+
       videoDetails = json.details;
       status = READY;
     } else {
@@ -58,7 +60,7 @@ const initialize = async (url) => {
 };
 
 const download = async (videoId, params) => {
-  const response = await fetchApi(`download2/${videoId}`, { params });
+  const response = await fetchApi(`download/${videoId}`, { params });
   const blob = await response.blob();
   const filename = response.headers.get("Content-Disposition").split('"')[1];
 

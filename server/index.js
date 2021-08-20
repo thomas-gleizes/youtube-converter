@@ -43,55 +43,20 @@ const JPG = "./tmp/file.jpg";
 
 const getDate = () => moment().format("YYYY-MM-DD HH:mm:ss");
 
-const downloadVideo = (url, dest) => {
-  return new Promise((resolve, reject) => {
-    const stream = ytdl(url, {
-      quality: "highestaudio",
-      filter: (format) => format.container === "mp4",
-    })
-      .on("progress", (_, dl, total) => {
-        const percent = parseInt(parseFloat(dl / total) * 100);
-        console.log(`Download : ${dl} / ${total} => ${percent}%`);
-      })
-      .on("error", (err) => {
-        console.log("Download error : ", err);
-        reject(err);
-      })
-      .on("end", () => {
-        console.log("Download : FINISH");
-        resolve(stream);
-      })
-      .pipe(fs.createWriteStream(dest));
+function parseTitle(title) {
+  ["(lyrics)", "(Lyrics)"].forEach((word) => {
+    title.replace(word, "");
   });
-};
-
-const convertToMp3 = (source, dest) => {
-  console.log("convert");
-  return new Promise((resolve, reject) => {
-    ffmpeg({ source })
-      .output(dest)
-      .audioBitrate("192k")
-      .on("end", () => {
-        console.log("Convert : FINISH");
-        resolve();
-      })
-      .on("error", (err) => {
-        console.log("convert error : ", err);
-        reject(err);
-      })
-      .run();
-  });
-};
+  return title;
+}
 
 const downloadCover = (info, index = null) => {
-  console.log("cover");
   return new Promise(async (resolve, reject) => {
     const {
       videoDetails: { thumbnails },
     } = info;
     if (!index) index = thumbnails.length - 1;
     const media = thumbnails[index];
-    console.log("MEDIA : ", index, media);
     const buffer = await fetch(media.url).then((response) => response.buffer());
     fs.writeFile(WEBP, buffer, (err) => {
       if (err) reject(err);
@@ -106,23 +71,13 @@ const downloadCover = (info, index = null) => {
   });
 };
 
-const setMetadata = (source, { videoDetails }) => {
-  const { media } = videoDetails;
-
-  let metadata = {};
-  if (media.category === "Music") metadata = { ...media };
-  else
-    metadata = {
-      title: videoDetails.title.replace("(lyrics)", "").replace("(Lyrics)", ""),
-      author: videoDetails.author.name,
-    };
-
+const setMetadata = (source, metadata) => {
   const options = {
     attachments: [JPG],
   };
 
   return new Promise((resolve, reject) => {
-    ffmetadata.write(source, metadata, options, (err) => {
+    ffmetadata.write(source, { ...metadata }, options, (err) => {
       if (err) reject(err);
       resolve();
     });
@@ -137,46 +92,15 @@ const clearTmp = () => {
 };
 
 app.get("/", (req, res) => {
-  console.log("request to index");
-
+  console.log(getDate(), " request to index");
   res.send({ route: "http://localhost:7999/download/:id", success: true });
 });
 
 app.get("/download/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(getDate(), `received : ${id}`);
+    console.log(getDate(), "download : ", id);
 
-    const url = `https://www.youtube.com/watch?v=${id}`;
-    const info = await ytdl.getInfo(url);
-
-    if (info.videoDetails.lengthSeconds > 480)
-      throw new Error("the video is to big");
-
-    await downloadVideo(url, MP4);
-    await convertToMp3(MP4, MP3);
-    await downloadCover(info);
-    await setMetadata(MP3, info);
-
-    res.set("Content-Type", "audio/mp3");
-    res.set(
-      "Content-Disposition",
-      `attachment; filename="${info.videoDetails.title}"`
-    );
-
-    const stream = fs.createReadStream(MP3);
-    console.log("script : finish");
-    stream.pipe(res);
-    clearTmp();
-  } catch (e) {
-    console.log("error", e);
-    res.status(400).send({ error: e.message });
-  }
-});
-
-app.get("/download2/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
     const url = `https://www.youtube.com/watch?v=${id}`;
     const info = await ytdl.getInfo(url, { quality: "highestaudio" });
     const videoLength = parseInt(info.videoDetails.lengthSeconds);
@@ -184,12 +108,9 @@ app.get("/download2/:id", async (req, res) => {
     const begin = parseInt(req.query.begin);
     const end = parseInt(req.query.end);
 
-    console.log("begin", begin);
-    console.log("end", end);
-
     let firstoptions,
       secondoptions = "";
-    let length = videoLength;
+    let length;
 
     if (begin && end) {
       firstoptions = `-ss ${begin}`;
@@ -208,8 +129,6 @@ app.get("/download2/:id", async (req, res) => {
       secondoptions = `-t ${videoLength}`;
       length = videoLength;
     }
-
-    console.log("options : ", firstoptions, secondoptions);
 
     if (length > 480) throw new Error("la video est trop longue");
     await new Promise((resolve, reject) =>
@@ -231,11 +150,19 @@ app.get("/download2/:id", async (req, res) => {
         .on("end", resolve)
     );
 
+    const metadata = {
+      artist: info.videoDetails.media.artist || info.videoDetails.author.name,
+      album: info.videoDetails.author.name,
+      title:
+        info.videoDetails.media.song || parseTitle(info.videoDetails.title),
+      date: new Date().getFullYear(),
+    };
+
     await downloadCover(info, req.query.cover);
-    await setMetadata(MP3, info);
+    await setMetadata(MP3, metadata);
 
     res.set("Content-Type", "audio/mp3");
-    res.set("Content-Disposition", `attachment; filename="test"`);
+    res.set("Content-Disposition", `attachment; filename="${metadata.title}"`);
 
     const audioStream = fs.createReadStream(MP3);
     audioStream.pipe(res);

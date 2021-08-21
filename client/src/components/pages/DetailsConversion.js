@@ -98,7 +98,7 @@ const DetailsConversion = () => {
           </div>
         </DetailsContext.Provider>
       ) : status === LOADING || status === WAITING ? (
-        <Spinner />
+        <Spinner size={30} className="my-4 text-blue-600" />
       ) : status === NULL ? (
         <div>
           <h2 className="text-lg text-yellow-500 text-center my-2 font-semibold">

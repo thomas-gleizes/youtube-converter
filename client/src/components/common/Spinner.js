@@ -4,10 +4,7 @@ import { FaSpinner } from "react-icons/fa";
 
 const Spinner = ({ size, className }) => {
   return (
-    <FaSpinner
-      size={size}
-      className={`animate-spin mx-auto my-2 ${className}`}
-    />
+    <FaSpinner size={size} className={`animate-spin mx-auto ${className}`} />
   );
 };
 
@@ -17,7 +14,7 @@ Spinner.prototype = {
 
 Spinner.defaultProps = {
   size: 20,
-  className: "",
+  className: "my-4",
 };
 
 export default Spinner;

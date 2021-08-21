@@ -218,7 +218,7 @@ app.get("/info/:id", async (req, res) => {
     const { videoDetails } = await ytdl.getInfo(url);
     res.send({ success: true, details: videoDetails });
   } catch (e) {
-    res.status(400);
+    res.status(400).send();
   }
 });
 

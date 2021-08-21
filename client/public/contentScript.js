@@ -22,7 +22,7 @@ function fetchApi(path, options) {
   return fetch(url.href, { headers: HEADERS, method: "GET" });
 }
 
-const initialize = async (url) => {
+const getInfo = async (url) => {
   try {
     const { hostname, pathname, searchParams } = new URL(url);
 
@@ -38,14 +38,18 @@ const initialize = async (url) => {
         response.json()
       );
 
+      console.log("JSON", json);
+
       videoDetails = json.details;
       status = READY;
     } else {
       status = NULL;
       videoId = null;
     }
-  } catch (e) {
+  } catch (err) {
+    console.log("INFO error : ", err);
     status = ERROR;
+    throw err;
   }
 };
 
@@ -66,9 +70,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     const { action } = request;
 
     if (action === "info") {
-      initialize(request.url).then(() =>
-        sendResponse({ status, videoDetails })
-      );
+      getInfo(request.url).then(() => sendResponse({ status, videoDetails }));
     } else if (action === "download") {
       download(request.videoId).then(() => sendResponse({ success: true }));
     } else if (action === "download2") {
@@ -77,6 +79,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       );
     } else if (action === "ask") {
       sendResponse({ videoDetails, videoId, status });
+    } else if (action === "reload") {
+      status = WAITING;
+      getInfo(document.location.href);
     } else {
       console.log("no action");
     }
@@ -86,6 +91,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   return true;
 });
 
-initialize(document.location.href)
+getInfo(document.location.href)
   .then(() => console.log("Initialize : success"))
   .catch((e) => console.log("Initialize : error => ", e));

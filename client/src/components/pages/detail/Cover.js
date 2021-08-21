@@ -24,7 +24,7 @@ const Cover = ({ video }) => {
   );
 
   return (
-    <Card title="Couverture" defaultOpen={true}>
+    <Card title="Couverture" defaultOpen={false}>
       <>
         <div className="py-1">
           {video.thumbnails && (

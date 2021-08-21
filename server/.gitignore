@@ -2,6 +2,7 @@
 yarn.lock
 package-lock.json
 .env
+trace.txt
 
 /tmp/*
 !/tmp/.gitkeep

@@ -18,23 +18,21 @@ const DetailsConversion = () => {
   const valuesState = useState({});
 
   const getInfoFromContentScript = () => {
-    if (chrome?.tabs?.query) {
+    if (chrome?.tabs?.query)
       chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
         chrome.tabs.sendMessage(tabs[0].id, { action: "ask" }, (response) => {
-          console.log("response", response);
           if (response?.status === "ready") {
             const { videoDetails, videoId } = response;
             setVideo({ id: videoId, ...videoDetails });
             setStatus(response.status);
           } else {
-            console.log("retry : ", response?.status);
             setStatus(response?.status || "error");
             setTimeout(getInfoFromContentScript, TIMEOUT);
           }
         });
       });
-    } else {
-      const Tabid = ["3PCHyHvLr4M", "sgt3ZjTBT1E"];
+    else {
+      const Tabid = ["3PCHyHvLr4M", "0zvN2Vu5HMw", "H6f11oN_gDY"];
       const id = Tabid[Math.floor(Math.random() * Tabid.length)];
 
       fetch(`http://localhost:7999/info/${id}`)
@@ -47,8 +45,6 @@ const DetailsConversion = () => {
   };
 
   useEffect(getInfoFromContentScript, []);
-
-  useEffect(() => console.log("video", video), [video]);
 
   const handleClick = async () => {
     setLoading(true);

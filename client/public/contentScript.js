@@ -7,7 +7,6 @@ const NULL = "null";
 
 const API_URL = "http://localhost:7999";
 const HEADERS = { authorization: "" };
-const BAN_WORDS = ["(lyrics)", "(Lyrics)"];
 
 let videoId = null;
 let videoDetails = null;
@@ -20,14 +19,7 @@ function fetchApi(path, options) {
       url.searchParams.append(key, options.params[key])
     );
 
-  return fetch(url.href, { HEADERS, method: "GET" });
-}
-
-function parseTitle(title) {
-  BAN_WORDS.forEach((word) => {
-    title.replace(word, "");
-  });
-  return title;
+  return fetch(url.href, { headers: HEADERS, method: "GET" });
 }
 
 const initialize = async (url) => {
@@ -46,8 +38,6 @@ const initialize = async (url) => {
         response.json()
       );
 
-      console.log("media", json.details.media);
-
       videoDetails = json.details;
       status = READY;
     } else {
@@ -65,7 +55,7 @@ const download = async (videoId, params) => {
   const filename = response.headers.get("Content-Disposition").split('"')[1];
 
   const anchor = document.createElement("a");
-  anchor.download = `${parseTitle(filename)}.mp3`;
+  anchor.download = `${filename}.mp3`;
   anchor.href = URL.createObjectURL(blob);
   anchor.click();
 };

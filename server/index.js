@@ -13,6 +13,10 @@ const fetch = require("node-fetch");
 dotenv.config();
 const app = express();
 
+const MP3 = "./tmp/file.mp3";
+const WEBP = "./tmp/file.webp";
+const JPG = "./tmp/file.jpg";
+
 app.use(
   cors({
     origin: "*",
@@ -22,33 +26,34 @@ app.use(
 );
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static("public"));
-//app.use(timeout(1000 * 30));
-
-app.get("*", (req, res, next) => {
-  if (
-    process.env.NODE_ENV === "dev" ||
-    req.headers.authorization === process.env.TOKEN
-  ) {
-    next();
-  } else {
-    console.log("tentative échoué");
-    res.status(401).send();
-  }
-});
-
-const MP3 = "./tmp/file.mp3";
-const MP4 = "./tmp/file.mp4";
-const WEBP = "./tmp/file.webp";
-const JPG = "./tmp/file.jpg";
+app.use(timeout(1000 * 30));
 
 const getDate = () => moment().format("YYYY-MM-DD HH:mm:ss");
 
-function parseTitle(title) {
+const createTrace = () => {
+  return new Promise((resolve) =>
+    fs.exists("trace.txt", (exists) => {
+      if (!exists)
+        fs.open("trace.txt", "w", () =>
+          fs.writeFile("trace.txt", `Trace start ${getDate()} \n\r`, resolve)
+        );
+      else resolve();
+    })
+  );
+};
+
+const trace = (message) => {
+  return new Promise((resolve) => {
+    fs.appendFile("trace.txt", `${getDate()} => ${message};\n`, resolve);
+  });
+};
+
+const parseTitle = (title) => {
   ["(lyrics)", "(Lyrics)"].forEach((word) => {
     title.replace(word, "");
   });
-  return title;
-}
+  return title.replace(/[^a-zA-Z ]/g, "");
+};
 
 const downloadCover = (info, index = null) => {
   return new Promise(async (resolve, reject) => {
@@ -86,20 +91,41 @@ const setMetadata = (source, metadata) => {
 
 const clearTmp = () => {
   fs.unlink(MP3, () => {});
-  fs.unlink(MP4, () => {});
   fs.unlink(WEBP, () => {});
   fs.unlink(JPG, () => {});
 };
 
+app.get("*", (req, res, next) => {
+  if (
+    process.env.NODE_ENV === "dev" ||
+    req.headers.authorization === process.env.TOKEN
+  ) {
+    next();
+  } else {
+    console.log("tentative échoué");
+    trace("Token invalid");
+    res.status(401).send();
+  }
+});
+
 app.get("/", (req, res) => {
-  console.log(getDate(), " request to index");
+  console.log(getDate(), "Request to index");
   res.send({ route: "http://localhost:7999/download/:id", success: true });
 });
 
+let status = false;
+
 app.get("/download/:id", async (req, res) => {
   try {
+    console.log("Status : ", status);
+    while (status) {
+      console.log("waiting : ", status);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    status = true;
     const { id } = req.params;
     console.log(getDate(), "download : ", id);
+    trace(`Download : ${id}`);
 
     const url = `https://www.youtube.com/watch?v=${id}`;
     const info = await ytdl.getInfo(url, { quality: "highestaudio" });
@@ -162,11 +188,19 @@ app.get("/download/:id", async (req, res) => {
     await setMetadata(MP3, metadata);
 
     res.set("Content-Type", "audio/mp3");
-    res.set("Content-Disposition", `attachment; filename="${metadata.title}"`);
+    res.set(
+      "Content-Disposition",
+      `attachment; filename="${
+        parseTitle(info.videoDetails.media.song) ||
+        parseTitle(info.videoDetails.title)
+      }"`
+    );
 
     const audioStream = fs.createReadStream(MP3);
     audioStream.pipe(res);
     clearTmp();
+    status = false;
+    console.log("END : " + metadata.title);
   } catch (e) {
     console.log("Error : ", e);
     res.status(500).send("une erreur est survenue.");
@@ -178,6 +212,8 @@ app.get("/info/:id", async (req, res) => {
     const { id } = req.params;
 
     console.log(getDate(), "info :", id);
+    trace(`Info : ${id}`);
+
     const url = `https://www.youtube.com/watch?v=${id}`;
     const { videoDetails } = await ytdl.getInfo(url);
     res.send({ success: true, details: videoDetails });
@@ -186,16 +222,10 @@ app.get("/info/:id", async (req, res) => {
   }
 });
 
-app.get("/headers", async (req, res) => {
-  const stream = fs.createReadStream("./tmp/test.mp3");
+app.listen(process.env.PORT || 8080, async () => {
+  await createTrace();
+  trace(`Server start on port : ${process.env.PORT}`);
 
-  res.set("Content-Type", "audio/mp3");
-  res.set("Content-Disposition", `attachment; filename="ceci est un test"`);
-
-  stream.pipe(res);
-});
-
-app.listen(process.env.PORT || 8080, () => {
   console.log(
     `============= server start at : ${getDate()}, on Port : ${
       process.env.PORT || 8080

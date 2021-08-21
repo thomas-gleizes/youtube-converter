@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 
 import { DetailsContext } from "../DetailsConversion";
 import Card from "../../layouts/Card";
@@ -28,6 +28,8 @@ const TimeLine = ({ video }) => {
     [values]
   );
 
+  const delta = useMemo(() => values.max - values.min - MAX, [values]);
+
   return (
     <Card title="Timeline" defaultOpen={true}>
       <ul className="text-xs p-2">
@@ -44,7 +46,7 @@ const TimeLine = ({ video }) => {
         <li>
           <span className="font-semibold text-gray-800">Delta : </span>
           <span className={toLong ? "text-red-600" : "text-green-600"}>
-            {values.max - values.min - MAX} secondes
+            {delta > 0 ? `+${delta}` : delta} secondes
           </span>
         </li>
       </ul>
@@ -52,7 +54,11 @@ const TimeLine = ({ video }) => {
         <Range
           minValue={0}
           maxValue={length}
-          formatLabel={(value) => `${value} s`}
+          formatLabel={(value) =>
+            `${parseInt(value / 60)}:${
+              value % 60 >= 10 ? value % 60 : `0${value % 60}`
+            }`
+          }
           value={values}
           onChange={(value) => setValues(value)}
         />

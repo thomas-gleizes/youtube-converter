@@ -50,9 +50,9 @@ const trace = (message) => {
 
 const parseTitle = (title) => {
   ["(lyrics)", "(Lyrics)"].forEach((word) => {
-    title.replace(word, "");
+    title?.replace(word, "");
   });
-  return title.replace(/[^a-zA-Z ]/g, "");
+  return title?.replace(/[^a-zA-Z ]/g, "");
 };
 
 const downloadCover = (info, index = null) => {
@@ -156,7 +156,9 @@ app.get("/download/:id", async (req, res) => {
       length = videoLength;
     }
 
-    if (length > 480) throw new Error("la video est trop longue");
+    if (length > process.env.MAX_LENGTH)
+      throw new Error("la video est trop longue");
+
     await new Promise((resolve, reject) =>
       ffmpeg(
         ytdl.downloadFromInfo(info, {

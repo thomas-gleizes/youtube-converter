@@ -48,6 +48,14 @@ const DetailsConversion = () => {
           });
         else setStatus(NULL);
       });
+    else {
+      fetch("http://localhost:7999/info/SnG4tNibrkY")
+        .then((response) => response.json())
+        .then((json) => {
+          setStatus(READY);
+          setVideo({ id: "0zvN2Vu5HMw", ...json.details });
+        });
+    }
   };
 
   useEffect(getInfoFromContentScript, [_]);

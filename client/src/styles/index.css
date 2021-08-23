@@ -17,5 +17,17 @@ code {
 }
 
 #root {
-  width: 260px;
+  width: 310px;
+}
+
+input, button, select, option {
+  outline: unset !important;
+}
+
+.simplebar-track.simplebar-vertical {
+  width: 7px !important;
+}
+
+.input-range__label-container {
+  color: black !important;
 }

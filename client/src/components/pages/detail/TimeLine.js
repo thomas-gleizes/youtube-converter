@@ -2,26 +2,29 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 
 import { DetailsContext } from "../DetailsConversion";
 import Card from "../../layouts/Card";
+import ListItem from "../../common/ListItem";
 import Range from "../../common/Range";
 
 const MAX = 480;
 
 const TimeLine = ({ video }) => {
   const length = parseInt(video.lengthSeconds) || 10;
+
   const [values, setValues] = useState({ min: 0, max: length });
-  const [toLong, setToLong] = useState(length > MAX);
   const [state, setState] = useContext(DetailsContext);
 
-  useEffect(() => setValues({ min: 0, max: length }), [length]);
+  const toLong = useMemo(() => values.max - values.min > MAX, [values, length]);
 
-  useEffect(() => setToLong(values.max - values.min > MAX), [values, length]);
+  useEffect(() => setValues({ min: 0, max: length }), [length]);
 
   useEffect(() => {
     const input = document.querySelector(".input-range__track--active");
 
-    if (values.max - values.min > MAX) input.style.backgroundColor = "#DC2626";
-    else input.style.backgroundColor = "#10B981";
-  }, [toLong]);
+    if (input)
+      if (values.max - values.min > MAX)
+        input.style.backgroundColor = "#DC2626";
+      else input.style.backgroundColor = "#10B981";
+  }, [toLong, values]);
 
   useEffect(
     () => setState({ ...state, begin: values.min, end: values.max }),
@@ -31,24 +34,19 @@ const TimeLine = ({ video }) => {
   const delta = useMemo(() => values.max - values.min - MAX, [values]);
 
   return (
-    <Card title="Timeline" defaultOpen={true}>
+    <Card title="Timeline" defaultOpen={false}>
       <ul className="text-xs p-2">
-        <li>
-          <span className="font-semibold text-gray-800">Durée : </span>
+        <ListItem title="Durée">
           <span className={toLong ? "text-red-600" : ""}>
             {values.max - values.min} secondes
           </span>
-        </li>
-        <li>
-          <span className="font-semibold text-gray-800">Max : </span>
-          {MAX} secondes
-        </li>
-        <li>
-          <span className="font-semibold text-gray-800">Delta : </span>
+        </ListItem>
+        <ListItem title="Max"> {MAX} secondes</ListItem>
+        <ListItem title="Delta">
           <span className={toLong ? "text-red-600" : "text-green-600"}>
             {delta > 0 ? `+${delta}` : delta} secondes
           </span>
-        </li>
+        </ListItem>
       </ul>
       <div className="p-6">
         <Range

@@ -1,23 +1,20 @@
 import React from "react";
 
 import Card from "../../layouts/Card";
+import ListItem from "../../common/ListItem";
 
 const MetaData = ({ video }) => {
   return (
     <Card title="Metadata">
       <ul className="text-xs p-2">
-        <li>
-          <span className="font-semibold text-gray-800">YouTube id : </span>
-          {video.id}
-        </li>
-        <li className="truncate">
-          <span className="font-semibold text-gray-800"> Titre : </span>
-          {video.title}
-        </li>
-        <li>
-          <span className="font-semibold text-gray-800">Auteur : </span>{" "}
-          {video.author?.name}
-        </li>
+        <ListItem title="Youtube id">{video.id}</ListItem>
+        <ListItem title="Titre">{video.media?.song || video.title}</ListItem>
+        <ListItem title={video.media?.artist ? "Artiste" : "Auteur"}>
+          {video.media?.artist || video.author?.name}
+        </ListItem>
+        {video.media?.album && (
+          <ListItem title="Album">{video.media?.album}</ListItem>
+        )}
         <li className="flex justify-between">
           <span>
             <span className="font-semibold text-gray-800">Durée : </span>

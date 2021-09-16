@@ -10,6 +10,7 @@ const Spinner = ({ size, className }) => {
 
 Spinner.prototype = {
   size: PropTypes.number,
+  className: PropTypes.string,
 };
 
 Spinner.defaultProps = {

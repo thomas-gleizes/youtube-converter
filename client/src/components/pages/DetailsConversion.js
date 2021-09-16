@@ -49,7 +49,7 @@ const DetailsConversion = () => {
         else setStatus(NULL);
       });
     else {
-      fetch("http://localhost:7999/info/SnG4tNibrkY")
+      fetch("http://localhost:8080/info/SnG4tNibrkY")
         .then((response) => response.json())
         .then((json) => {
           setStatus(READY);

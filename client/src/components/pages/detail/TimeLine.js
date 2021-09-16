@@ -1,9 +1,10 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 
 import { DetailsContext } from "../DetailsConversion";
 import Card from "../../layouts/Card";
 import ListItem from "../../common/ListItem";
 import Range from "../../common/Range";
+import { useCallbackRef } from "../../../hooks";
 
 const MAX = 480;
 
@@ -33,8 +34,10 @@ const TimeLine = ({ video }) => {
 
   const delta = useMemo(() => values.max - values.min - MAX, [values]);
 
+  const [node, ref] = useCallbackRef(console.log);
+
   return (
-    <Card title="Timeline" defaultOpen={false}>
+    <Card innerRef={ref} title="Timeline" defaultOpen={false}>
       <ul className="text-xs p-2">
         <ListItem title="Durée">
           <span className={toLong ? "text-red-600" : ""}>

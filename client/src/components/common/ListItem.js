@@ -8,6 +8,7 @@ const ListItem = ({ title, children, ...rest }) => {
     </li>
   );
 };
+
 ListItem.propTypes = {
   title: PropTypes.string.isRequired,
   children: PropTypes.node,

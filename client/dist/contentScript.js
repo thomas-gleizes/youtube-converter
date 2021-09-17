@@ -15,9 +15,7 @@ let status = WAITING;
 function fetchApi(path, options) {
   const url = new URL(`${API_URL}/${path}`);
   if (options?.params)
-    Object.keys(options.params).forEach((key) =>
-      url.searchParams.append(key, options.params[key])
-    );
+    Object.keys(options.params).forEach((key) => url.searchParams.append(key, options.params[key]));
 
   return fetch(url.href, { headers: HEADERS, method: "GET" });
 }
@@ -26,17 +24,11 @@ const getInfo = async (url) => {
   try {
     const { hostname, pathname, searchParams } = new URL(url);
 
-    if (
-      hostname === "www.youtube.com" &&
-      pathname === "/watch" &&
-      searchParams.get("v")
-    ) {
+    if (hostname === "www.youtube.com" && pathname === "/watch" && searchParams.get("v")) {
       videoId = searchParams.get("v");
       status = LOADING;
 
-      const json = await fetchApi(`info/${videoId}`).then((response) =>
-        response.json()
-      );
+      const json = await fetchApi(`info/${videoId}`).then((response) => response.json());
 
       console.log("JSON", json);
 
@@ -74,9 +66,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     } else if (action === "download") {
       download(request.videoId).then(() => sendResponse({ success: true }));
     } else if (action === "download2") {
-      download(request.videoId, request.params).then(() =>
-        sendResponse({ success: true })
-      );
+      download(request.videoId, request.params).then(() => sendResponse({ success: true }));
     } else if (action === "ask") {
       sendResponse({ videoDetails, videoId, status });
     } else if (action === "reload") {

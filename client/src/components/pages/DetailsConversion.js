@@ -30,11 +30,7 @@ const DetailsConversion = () => {
     if (chrome?.tabs?.query)
       chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
         const { hostname, pathname, searchParams } = new URL(tabs[0].url);
-        if (
-          hostname === "www.youtube.com" &&
-          pathname === "/watch" &&
-          searchParams.get("v")
-        )
+        if (hostname === "www.youtube.com" && pathname === "/watch" && searchParams.get("v"))
           chrome.tabs.sendMessage(tabs[0].id, { action: "ask" }, (response) => {
             const status = response?.status;
 
@@ -42,14 +38,13 @@ const DetailsConversion = () => {
               const { videoDetails, videoId } = response;
               setVideo({ id: videoId, ...videoDetails });
               setStatus(response.status);
-            } else if (status === ERROR || status === NULL)
-              setStatus(response.status);
+            } else if (status === ERROR || status === NULL) setStatus(response.status);
             else setTimeout(getInfoFromContentScript, TIMEOUT);
           });
         else setStatus(NULL);
       });
     else {
-      fetch("http://localhost:7999/info/SnG4tNibrkY")
+      fetch("http://localhost:8000/info/SnG4tNibrkY")
         .then((response) => response.json())
         .then((json) => {
           setStatus(READY);
@@ -58,7 +53,7 @@ const DetailsConversion = () => {
     }
   };
 
-  useEffect(getInfoFromContentScript, [_]);
+  useEffect(getInfoFromContentScript, [_]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleClick = async () => {
     setLoading(true);
@@ -67,13 +62,9 @@ const DetailsConversion = () => {
 
     if (chrome.tabs)
       chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) =>
-        chrome.tabs.sendMessage(
-          tabs[0].id,
-          { action: "download2", videoId, params: values },
-          (response) => {
-            if (response.success) setLoading(false);
-          }
-        )
+        chrome.tabs.sendMessage(tabs[0].id, { action: "download2", videoId, params: values }, (response) => {
+          if (response.success) setLoading(false);
+        })
       );
     else {
       await new Promise((resolve) => setTimeout(resolve, 4000));
@@ -109,15 +100,11 @@ const DetailsConversion = () => {
         <Spinner size={30} className="my-4 text-blue-600" />
       ) : status === NULL ? (
         <div>
-          <h2 className="text-lg text-yellow-500 text-center my-2 font-semibold">
-            Aucun video détecter
-          </h2>
+          <h2 className="text-lg text-yellow-500 text-center my-2 font-semibold">Aucun video détecter</h2>
         </div>
       ) : status === ERROR ? (
         <div>
-          <h2 className="text-lg text-red-500 text-center my-2 font-semibold">
-            Une erreur est survenue
-          </h2>
+          <h2 className="text-lg text-red-500 text-center my-2 font-semibold">Une erreur est survenue</h2>
           <div className="w-10/12 mx-auto my-2">
             <button
               onClick={handleReload}

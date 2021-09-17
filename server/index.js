@@ -180,7 +180,7 @@ app.get("/download/:id", async (req, res) => {
 
     const metadata = {
       artist: info.videoDetails.media.artist || info.videoDetails.author.name,
-      album: info.videoDetails.author.name,
+      album: info.videoDetails.media.album || "",
       title:
         info.videoDetails.media.song || parseTitle(info.videoDetails.title),
       date: new Date().getFullYear(),
@@ -224,13 +224,13 @@ app.get("/info/:id", async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT || 8080, async () => {
+app.listen(process.env.PORT || 8000, async () => {
   await createTrace();
   trace(`Server start on port : ${process.env.PORT}`);
 
   console.log(
     `============= server start at : ${getDate()}, on Port : ${
-      process.env.PORT || 8080
+      process.env.PORT || 8000
     } =============`
   );
 });

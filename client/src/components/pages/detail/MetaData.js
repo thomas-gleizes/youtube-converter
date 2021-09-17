@@ -12,15 +12,11 @@ const MetaData = ({ video }) => {
         <ListItem title={video.media?.artist ? "Artiste" : "Auteur"}>
           {video.media?.artist || video.author?.name}
         </ListItem>
-        {video.media?.album && (
-          <ListItem title="Album">{video.media?.album}</ListItem>
-        )}
+        {video.media?.album && <ListItem title="Album">{video.media?.album}</ListItem>}
         <li className="flex justify-between">
           <span>
             <span className="font-semibold text-gray-800">Durée : </span>
-            <span className={video.lengthSeconds > 480 ? "text-red-600" : ""}>
-              {video.lengthSeconds}s
-            </span>
+            <span className={video.lengthSeconds > 480 ? "text-red-600" : ""}>{video.lengthSeconds}s</span>
           </span>
           <span className="text-xs opacity-30">max: 480s</span>
         </li>

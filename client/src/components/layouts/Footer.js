@@ -10,9 +10,7 @@ const Footer = () => {
     return (
       <div
         onClick={handleClick}
-        className={`cursor-pointer text-center ${
-          current === route && "border-b-2 border-white"
-        }`}
+        className={`cursor-pointer text-center ${current === route && "border-b-2 border-white"}`}
       >
         {route.libelle}
       </div>

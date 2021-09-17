@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useImperativeHandle } from "react";
 import PropTypes from "prop-types";
 import { Transition } from "@tailwindui/react";
 import { FaMinus, FaPlus } from "react-icons/fa";
@@ -8,8 +8,13 @@ import { useToggle } from "../../hooks";
 const Card = ({ innerRef, title, children, defaultOpen }) => {
   const [open, toggle] = useToggle(defaultOpen);
 
+  useImperativeHandle(innerRef, () => ({
+    open,
+    toggle,
+  }));
+
   return (
-    <div ref={innerRef} className="border mb-2 rounded-lg shadow-md">
+    <div data-open={open} className="border mb-2 rounded-lg shadow-md">
       <div className="px-2 py-1 flex justify-between">
         <h2 className="text-lg">{title}</h2>
         <button

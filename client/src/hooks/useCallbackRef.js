@@ -1,17 +1,16 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 
 const useCallbackRef = (effect) => {
   const [node, setNode] = useState(null);
 
   const ref = useCallback(
-    (node) => {
-      if (node) {
-        setNode(node);
-
-        effect && effect(node);
+    (e) => {
+      if (e && JSON.stringify(e) !== JSON.stringify(node)) {
+        setNode(e);
+        effect && effect(e);
       }
     },
-    [node]
+    [node] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   return [node, ref];

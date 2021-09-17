@@ -8,9 +8,7 @@ const Cover = ({ video }) => {
   const [selected, setSelected] = useState(null);
 
   useEffect(
-    () =>
-      video.thumbnails &&
-      setSelected(video.thumbnails[video.thumbnails.length - 1]),
+    () => video.thumbnails && setSelected(video.thumbnails[video.thumbnails.length - 1]),
     [video.thumbnails]
   );
 
@@ -20,7 +18,7 @@ const Cover = ({ video }) => {
         ...state,
         cover: video.thumbnails?.findIndex((cover) => cover === selected),
       }),
-    [selected]
+    [selected] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   return (

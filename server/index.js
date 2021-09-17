@@ -223,13 +223,13 @@ app.get("/info/:id", async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT || 8080, async () => {
+app.listen(process.env.PORT || 8000, async () => {
   await createTrace();
   trace(`Server start on port : ${process.env.PORT}`);
 
   console.log(
     `============= server start at : ${getDate()}, on Port : ${
-      process.env.PORT || 8080
+      process.env.PORT || 8000
     } =============`
   );
 });

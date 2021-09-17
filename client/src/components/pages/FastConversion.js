@@ -20,11 +20,7 @@ const FastConversion = () => {
     if (url) {
       const { hostname, searchParams, pathname } = url;
 
-      if (
-        hostname === "www.youtube.com" &&
-        pathname === "/watch" &&
-        searchParams.get("v")
-      )
+      if (hostname === "www.youtube.com" && pathname === "/watch" && searchParams.get("v"))
         setVideoId(searchParams.get("v"));
       else setVideoId(null);
     } else setVideoId(null);
@@ -35,15 +31,11 @@ const FastConversion = () => {
     console.log("id", videoId);
     chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
       const activeTab = tabs[0];
-      chrome.tabs.sendMessage(
-        activeTab.id,
-        { action: "download", videoId },
-        (response) => {
-          if (response.success) {
-            setLoading(false);
-          }
+      chrome.tabs.sendMessage(activeTab.id, { action: "download", videoId }, (response) => {
+        if (response.success) {
+          setLoading(false);
         }
-      );
+      });
     });
   };
 
@@ -60,9 +52,7 @@ const FastConversion = () => {
             Convertir
           </Button>
         ) : (
-          <h2 className="text-lg text-yellow-500 text-center my-2 font-semibold">
-            Aucun video détécter
-          </h2>
+          <h2 className="text-lg text-yellow-500 text-center my-2 font-semibold">Aucun video détécter</h2>
         )}
       </div>
     </div>

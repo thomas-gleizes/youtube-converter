@@ -10,9 +10,7 @@ const useFetch = (url, options = {}, deps = [], condition = true) => {
       (async () => {
         setLoading(true);
         try {
-          const json = await fetch(url, options).then((response) =>
-            response.json()
-          );
+          const json = await fetch(url, options).then((response) => response.json());
 
           setData(json);
           setIsCrash(false);
@@ -22,7 +20,7 @@ const useFetch = (url, options = {}, deps = [], condition = true) => {
         setLoading(false);
       })();
     }
-  }, [...deps]);
+  }, [...deps]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return [data, loading, isCrash];
 };

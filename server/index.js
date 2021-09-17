@@ -180,6 +180,7 @@ app.get("/download/:id", async (req, res) => {
 
     const metadata = {
       artist: info.videoDetails.media.artist || info.videoDetails.author.name,
+      album: info.videoDetails.media.album || "",
       title:
         info.videoDetails.media.song || parseTitle(info.videoDetails.title),
       date: new Date().getFullYear(),

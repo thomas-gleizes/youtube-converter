@@ -17,6 +17,12 @@ const MP3 = "./tmp/file.mp3";
 const WEBP = "./tmp/file.webp";
 const JPG = "./tmp/file.jpg";
 
+const WAITING = "waiting";
+const DOWNLOADING = "downloading";
+const READY = "READY";
+
+var status = WAITING;
+
 app.use(
   cors({
     origin: "*",
@@ -26,7 +32,7 @@ app.use(
 );
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static("public"));
-app.use(timeout(1000 * 30));
+app.use(timeout(30000));
 
 const getDate = () => moment().format("YYYY-MM-DD HH:mm:ss");
 
@@ -43,9 +49,9 @@ const createTrace = () => {
 };
 
 const trace = (message) => {
-  return new Promise((resolve) => {
-    fs.appendFile("trace.txt", `${getDate()} => ${message};\n`, resolve);
-  });
+  fs.appendFile("trace.txt", `${getDate()} => ${message};\n`, () =>
+    console.log(`> trace : ${message}`)
+  );
 };
 
 const parseTitle = (title) => {
@@ -113,99 +119,119 @@ app.get("/", (req, res) => {
   res.send({ route: "http://localhost:7999/download/:id", success: true });
 });
 
-let status = false;
-
 app.get("/download/:id", async (req, res) => {
+  console.log("status", status);
+
   try {
-    console.log("Status : ", status);
-    while (status) {
-      console.log("waiting : ", status);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-    status = true;
+    let timeout = false;
     const { id } = req.params;
-    console.log(getDate(), "download : ", id);
-    trace(`Download : ${id}`);
 
-    const url = `https://www.youtube.com/watch?v=${id}`;
-    const info = await ytdl.getInfo(url, { quality: "highestaudio" });
-    const videoLength = parseInt(info.videoDetails.lengthSeconds);
+    if (status === DOWNLOADING) {
+      res.status(403).send({ status });
+      return;
+    } else if (status === WAITING) {
+      clearTmp();
 
-    const begin = parseInt(req.query.begin);
-    const end = parseInt(req.query.end);
+      status = DOWNLOADING;
+      setTimeout(() => {
+        console.log("timeout");
+        timeout = true;
+      }, 30000);
 
-    let firstoptions,
-      secondoptions = "";
-    let length;
+      trace(`Download : ${id}`);
 
-    if (begin && end) {
-      firstoptions = `-ss ${begin}`;
-      secondoptions = `-t ${end - begin}`;
-      length = end - begin;
-    } else if (begin) {
-      firstoptions = `-ss ${begin}`;
-      secondoptions = `-t ${videoLength}`;
-      length = videoLength - begin;
-    } else if (end) {
-      firstoptions = "-ss 0";
-      secondoptions = `-t ${end}`;
-      length = end;
-    } else {
-      firstoptions = "-ss 0";
-      secondoptions = `-t ${videoLength}`;
-      length = videoLength;
+      const url = `https://www.youtube.com/watch?v=${id}`;
+      const info = await ytdl.getInfo(url, { quality: "highestaudio" });
+      const videoLength = parseInt(info.videoDetails.lengthSeconds);
+
+      const begin = parseInt(req.query.begin);
+      const end = parseInt(req.query.end);
+
+      let firstoptions,
+        secondoptions = "";
+      let length;
+
+      if (begin && end) {
+        firstoptions = `-ss ${begin}`;
+        secondoptions = `-t ${end - begin}`;
+        length = end - begin;
+      } else if (begin) {
+        firstoptions = `-ss ${begin}`;
+        secondoptions = `-t ${videoLength}`;
+        length = videoLength - begin;
+      } else if (end) {
+        firstoptions = "-ss 0";
+        secondoptions = `-t ${end}`;
+        length = end;
+      } else {
+        firstoptions = "-ss 0";
+        secondoptions = `-t ${videoLength}`;
+        length = videoLength;
+      }
+
+      if (length > process.env.MAX_LENGTH)
+        throw new Error("la video est trop longue");
+
+      await new Promise((resolve, reject) =>
+        ffmpeg(
+          ytdl.downloadFromInfo(info, {
+            quality: "highestaudio",
+          })
+        )
+          .audioBitrate(info.formats[0].audioBitrate)
+          .withAudioCodec("libmp3lame")
+          .toFormat("mp3")
+          .inputOptions(firstoptions)
+          .inputOptions(secondoptions)
+          .saveToFile(MP3)
+          .on("progress", (progress) =>
+            console.log("progress : ", progress.timemark)
+          )
+          .on("error", reject)
+          .on("end", resolve)
+      );
+
+      const metadata = {
+        artist: info.videoDetails.media.artist || info.videoDetails.author.name,
+        album: info.videoDetails.media.album || "",
+        title:
+          info.videoDetails.media.song || parseTitle(info.videoDetails.title),
+        date: new Date().getFullYear(),
+      };
+
+      await downloadCover(info, req.query.cover);
+      await setMetadata(MP3, metadata);
+
+      status = READY;
     }
 
-    if (length > process.env.MAX_LENGTH)
-      throw new Error("la video est trop longue");
+    if (timeout) {
+      res.status(503).send();
+    } else {
+      res.set("Content-Type", "audio/mp3");
+      fs.createReadStream(MP3).pipe(res);
 
-    await new Promise((resolve, reject) =>
-      ffmpeg(
-        ytdl.downloadFromInfo(info, {
-          quality: "highestaudio",
-        })
-      )
-        .audioBitrate(info.formats[0].audioBitrate)
-        .withAudioCodec("libmp3lame")
-        .toFormat("mp3")
-        .inputOptions(firstoptions)
-        .inputOptions(secondoptions)
-        .saveToFile(MP3)
-        .on("progress", (progress) =>
-          console.log("progress : ", progress.timemark)
-        )
-        .on("error", reject)
-        .on("end", resolve)
-    );
-
-    const metadata = {
-      artist: info.videoDetails.media.artist || info.videoDetails.author.name,
-      album: info.videoDetails.media.album || "",
-      title:
-        info.videoDetails.media.song || parseTitle(info.videoDetails.title),
-      date: new Date().getFullYear(),
-    };
-
-    await downloadCover(info, req.query.cover);
-    await setMetadata(MP3, metadata);
-
-    res.set("Content-Type", "audio/mp3");
-    res.set(
-      "Content-Disposition",
-      `attachment; filename="${
-        parseTitle(info.videoDetails.media.song) ||
-        parseTitle(info.videoDetails.title)
-      }"`
-    );
-
-    const audioStream = fs.createReadStream(MP3);
-    audioStream.pipe(res);
-    clearTmp();
-    status = false;
-    console.log("END : " + metadata.title);
+      status = WAITING;
+    }
   } catch (e) {
+    status = WAITING;
     console.log("Error : ", e);
+    trace(`Erreure sur download`);
+
     res.status(500).send("une erreur est survenue.");
+  }
+
+  console.log("fin Status", status);
+});
+
+app.get("/download", async (req, res) => {
+  if (status === DOWNLOADING) {
+    res.status(403).send({ status });
+  } else if (status === READY) {
+    res.set("Content-Type", "audio/mp3");
+    fs.createReadStream(MP3).pipe(res);
+  } else if (status === WAITING) {
+    res.status(404).send({ status });
   }
 });
 
@@ -224,13 +250,19 @@ app.get("/info/:id", async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT || 8000, async () => {
+app.get("/trace", (req, res) => {
+  res.set("Content-Type", "text/txt");
+  res.set("Content-Disposition", `attachment; filename="trace"`);
+  fs.createReadStream("trace.txt").pipe(res);
+});
+
+app.listen(process.env.PORT, async () => {
   await createTrace();
   trace(`Server start on port : ${process.env.PORT}`);
 
   console.log(
     `============= server start at : ${getDate()}, on Port : ${
-      process.env.PORT || 8000
+      process.env.PORT
     } =============`
   );
 });

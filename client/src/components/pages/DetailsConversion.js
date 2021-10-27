@@ -11,6 +11,7 @@ import TimeLine from "./detail/TimeLine";
 const READY = "ready";
 const LOADING = "loading";
 const WAITING = "waiting";
+const DOWNLOADING = "downloading";
 const ERROR = "error";
 const NULL = "null";
 
@@ -34,23 +35,30 @@ const DetailsConversion = () => {
           chrome.tabs.sendMessage(tabs[0].id, { action: "ask" }, (response) => {
             const status = response?.status;
 
+            console.log("Status", status);
+
             if (status === READY) {
               const { videoDetails, videoId } = response;
               setVideo({ id: videoId, ...videoDetails });
               setStatus(response.status);
+              setLoading(false);
+            } else if (status === DOWNLOADING) {
+              const { videoDetails, videoId } = response;
+              setVideo({ id: videoId, ...videoDetails });
+              setStatus(response.status);
+              setLoading(true);
             } else if (status === ERROR || status === NULL) setStatus(response.status);
             else setTimeout(getInfoFromContentScript, TIMEOUT);
           });
         else setStatus(NULL);
       });
-    else {
+    else
       fetch("http://localhost:8000/info/SnG4tNibrkY")
         .then((response) => response.json())
         .then((json) => {
           setStatus(READY);
           setVideo({ id: "0zvN2Vu5HMw", ...json.details });
         });
-    }
   };
 
   useEffect(getInfoFromContentScript, [_]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -83,7 +91,7 @@ const DetailsConversion = () => {
 
   return (
     <>
-      {status === READY ? (
+      {status === READY || status === DOWNLOADING ? (
         <DetailsContext.Provider value={valuesState}>
           <div className="p-2">
             <MetaData video={video} />

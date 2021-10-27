@@ -1,6 +1,6 @@
 {
   "name": "youtube converter mp3 V2",
-  "version": "2.2.1",
+  "version": "2.2.3",
   "manifest_version": 2,
   "description": "convertir la video que tu regarde en mp3 directement",
   "icons": {
